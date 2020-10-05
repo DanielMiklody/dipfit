@@ -101,15 +101,24 @@ if ~isfield(cfg, 'component')
   cfg.component = 1:size(comp.topo,2);
 end
 
+% [cfg] = add_sourcemodel_with_leadfields(cfg,comp);
 % for each component scan the whole brain with dipoles using FIELDTRIPs
 % dipolefitting function
 source = ft_dipolefitting(cfg, comp);
+
+% source = add_tissue_name(source, cfg);
 
 % reformat the output dipole sources into EEGLABs data structure
 for i=1:length(cfg.component)
   EEG.dipfit.model(cfg.component(i)).posxyz = source.dip(i).pos;
   EEG.dipfit.model(cfg.component(i)).momxyz = reshape(source.dip(i).mom, 3, length(source.dip(i).mom)/3)';
+  EEG.dipfit.model(cfg.component(i)).posxyzcoarse = source.dip(i).pos;
+  EEG.dipfit.model(cfg.component(i)).momxyzcoarse = reshape(source.dip(i).mom, 3, length(source.dip(i).mom)/3)';
   EEG.dipfit.model(cfg.component(i)).rv     = source.dip(i).rv;
+  EEG.dipfit.model(cfg.component(i)).rvcoarse     = source.dip(i).rv;
+  EEG.dipfit.model(cfg.component(i)).tissue   = 'standard';%source.dip(i).tissue;
+%   EEG.dipfit.model(cfg.component(i)).tissue   = source.dip(i).tissue;
+  EEG.dipfit.model(cfg.component(i)).vdatacoarse   = source.Vdata(:,i);
+  EEG.dipfit.model(cfg.component(i)).vmodelcoarse   = source.Vmodel(:,i);
 end
-
 EEGOUT = EEG;

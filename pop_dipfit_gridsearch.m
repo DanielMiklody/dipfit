@@ -46,7 +46,7 @@
 % Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [EEGOUT, com] = pop_dipfit_gridsearch(EEG, select, xgrid, ygrid, zgrid, reject );
+function [EEGOUT, com] = pop_dipfit_gridsearch(EEG, select,  pos , inside, reject)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if nargin < 1
@@ -115,15 +115,12 @@ if nargin < 2
       select = [1:size(EEG.icawinv,2)];
     end;
     if nargin < 3
-      xgrid  = eval( xgridstr );
+      pos=[];
     end;
     if nargin < 4
-      ygrid  = eval( ygridstr );
+      inside=[];
     end;
     if nargin < 5
-      zgrid  = eval( zgridstr );
-    end;
-    if nargin < 6
       reject  = eval( rejectstr );
     end;
     options = { 'waitbar' 'none' };
@@ -131,8 +128,28 @@ if nargin < 2
   
   % perform batch fit with single dipole for all selected channels and components
   % warning off;
-  warning backtrace off;  
-  EEGOUT = dipfit_gridsearch(EEG, 'component', select, 'xgrid', xgrid, 'ygrid', ygrid, 'zgrid', zgrid, options{:});
+  warning backtrace off; 
+  if ~isempty(pos)
+      sourcemodel.pos=pos;
+      if ~isempty(inside)
+          sourcemodel.inside=inside;
+      end
+      load(EEG.dipfit.hdmfile);
+      EEG.dipfit.vol=vol;
+      clear vol
+      comp = eeglab2fieldtrip(EEG, 'componentanalysis', 'dipfit');
+      comp.elec.chanpos=comp.elec.elecpos;      
+      lf=ft_compute_leadfield(sourcemodel.pos(sourcemodel.inside,:), comp.elec, EEG.dipfit.vol);
+      lf=permute(reshape(lf,size(lf,1),3,[]),[1 3 2]);
+      lf2=nan(size(lf,1),numel(sourcemodel.inside),3);
+      lf2(:,sourcemodel.inside,:)=lf;
+      sourcemodel.leadfield=num2cell(lf2,[1 3]);
+      sourcemodel.leadfield=cellfun(@squeeze,sourcemodel.leadfield,'UniformOutput',false);
+      sourcemodel.label=comp.elec.label;
+      EEGOUT = dipfit_gridsearch(EEG, 'component', select, 'sourcemodel',sourcemodel, options{:});
+  else
+      EEGOUT = dipfit_gridsearch(EEG, 'component', select, 'xgrid', xgrid, 'ygrid', ygrid, 'zgrid', zgrid, options{:});
+  end
   warning backtrace on;
   EEGOUT.dipfit.model  = dipfit_reject(EEGOUT.dipfit.model, reject);
 
@@ -144,4 +161,8 @@ if nargin < 2
   
   % FIXME reject is not being used at the moment
   disp('Done');
-  com = sprintf('EEG = pop_dipfit_gridsearch(EEG, %s);', vararg2str( { select xgrid, ygrid, zgrid reject }));
+  if ~isempty(pos)
+    com = sprintf('EEG = pop_dipfit_gridsearch(EEG, %s);', vararg2str( { select, pos, inside, reject }));
+  else
+    com = sprintf('EEG = pop_dipfit_gridsearch(EEG, %s);', vararg2str( { select, xgrid, ygrid, zgrid, reject }));
+  end
