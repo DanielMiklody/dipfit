@@ -6,6 +6,8 @@
 %  >> EEGOUT = pop_dipfit_gridsearch( EEGIN ); % pop up interactive window
 %  >> EEGOUT = pop_dipfit_gridsearch( EEGIN, comps );
 %  >> EEGOUT = pop_dipfit_gridsearch( EEGIN, comps, xgrid, ygrid, zgrid, thresh )
+%  >> EEGOUT = pop_dipfit_gridsearch( EEGIN, comps, xgrid, ygrid, zgrid, thresh, sourcetissues, bnd)
+%  >> EEGOUT = pop_dipfit_gridsearch( EEGIN, comps, pos, inside , thresh  )
 %
 % Inputs:
 %   EEGIN     - input dataset
@@ -46,7 +48,7 @@
 % Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [EEGOUT, com] = pop_dipfit_gridsearch(EEG, select,  pos , inside, reject)
+function [EEGOUT, com] = pop_dipfit_gridsearch(EEG, select, varargin)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if nargin < 1
@@ -81,7 +83,7 @@ if strcmpi(EEG.dipfit.coordformat, 'CTF')
     xgridstr     = sprintf('linspace(-%2.1f,%2.1f,24)', maxrad, maxrad);
     ygridstr     = sprintf('linspace(-%2.1f,%2.1f,24)', maxrad, maxrad);
     zgridstr     = sprintf('linspace(0,%2.1f,12)', maxrad);
-end;
+end
 if nargin < 2
   % get the default values and filenames
   promptstr = { 'Component(s) (not faster if few comp.)', ...
@@ -112,24 +114,87 @@ if nargin < 2
     options = { };
   else
     if nargin < 2
-      select = [1:size(EEG.icawinv,2)];
-    end;
-    if nargin < 3
-      pos=[];
-    end;
-    if nargin < 4
-      inside=[];
-    end;
-    if nargin < 5
-      reject  = eval( rejectstr );
-    end;
+        select = [1:size(EEG.icawinv,2)];
+    end
+    if nargin > 4 && nargin < 6 && islogical(varargin(2))% EEGOUT = pop_dipfit_gridsearch( EEGIN, comps, pos, inside , thresh  )
+        if nargin < 3
+            pos=[];
+        else
+            pos=varargin{1};
+        end
+        if nargin < 4
+            inside=[];
+        else
+            inside=varargin{2};
+        end
+        if nargin < 5
+            reject  = eval( rejectstr );
+         else
+            reject=varargin{3};
+        end        
+    else %EEGOUT = pop_dipfit_gridsearch( EEGIN, comps, xgrid, ygrid, zgrid, thresh ,sourcetissue)
+        pos=[];
+        if nargin < 2
+            select = [1:size(EEG.icawinv,2)];
+        end
+        if nargin < 3
+            xgrid  = eval( xgridstr );
+        else
+            xgrid= varargin{1};
+        end
+        if nargin < 4
+            ygrid  = eval( ygridstr );
+        else
+            ygrid= varargin{2};
+        end
+        if nargin < 5
+            zgrid  = eval( zgridstr );
+        else
+            zgrid= varargin{3};
+        end
+        if nargin < 6
+            reject  = eval( rejectstr );
+        else
+            reject= varargin{4};
+        end
+        if nargin < 7
+            sourcetissues= {};
+        else
+            sourcetissues= varargin{5};
+        end
+        if nargin < 7
+            sourcetissues= {};
+        else
+            new_bnd= varargin{6};
+        end
+    end
     options = { 'waitbar' 'none' };
-  end;
+end
   
   % perform batch fit with single dipole for all selected channels and components
   % warning off;
   warning backtrace off; 
-  if ~isempty(pos)
+  
+  if ~isempty(pos)||~isempty(sourcetissues)
+      if ~isempty(sourcetissues)
+          [X, Y, Z]  = ndgrid(xgrid, ygrid, zgrid);
+          pos=[X(:) Y(:) Z(:)];
+          if is_inside(new_bnd(4).pos,new_bnd(1))
+              warning('assuming surface nesting from outside --> inside');              
+          else
+              warning('assuming surface nesting from inside -->outside');              
+              new_bnd=new_bnd(fliplr(1:end));
+          end
+          inside=false(size(pos,1),1);
+          for ii=1:numel(sourcetissues) 
+              if sourcetissues{ii}==numel(new_bnd)
+                  inside=inside|is_inside(pos,new_bnd(end));
+              else
+                  inside=inside|is_inside(pos,new_bnd(sourcetissues{ii}))&~is_inside(pos,new_bnd(sourcetissues{ii}+1));
+              end
+          end
+      end
+      
       sourcemodel.pos=pos;
       if ~isempty(inside)
           sourcemodel.inside=inside;
