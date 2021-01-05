@@ -199,11 +199,13 @@ end
       if ~isempty(inside)
           sourcemodel.inside=inside;
       end
-      load(EEG.dipfit.hdmfile);
+      load(EEG.dipfit.hdmfile);      
       EEG.dipfit.vol=vol;
       clear vol
       comp = eeglab2fieldtrip(EEG, 'componentanalysis', 'dipfit');
-      comp.elec.chanpos=comp.elec.elecpos;      
+      comp.elec.chanpos=comp.elec.elecpos;     
+      ft_defaults;
+      [EEG.dipfit.vol, comp.elec] = ft_prepare_vol_sens(EEG.dipfit.vol, comp.elec);      
       lf=ft_compute_leadfield(sourcemodel.pos(sourcemodel.inside,:), comp.elec, EEG.dipfit.vol);
       lf=permute(reshape(lf,size(lf,1),3,[]),[1 3 2]);
       lf2=nan(size(lf,1),numel(sourcemodel.inside),3);
