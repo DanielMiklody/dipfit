@@ -116,7 +116,7 @@ if nargin < 2
     if nargin < 2
         select = [1:size(EEG.icawinv,2)];
     end
-    if nargin > 4 && nargin < 6 && islogical(varargin(2))% EEGOUT = pop_dipfit_gridsearch( EEGIN, comps, pos, inside , thresh  )
+    if nargin > 4 && nargin < 6 && islogical(varargin{2})% EEGOUT = pop_dipfit_gridsearch( EEGIN, comps, pos, inside , thresh  )
         if nargin < 3
             pos=[];
         else
@@ -132,6 +132,7 @@ if nargin < 2
          else
             reject=varargin{3};
         end        
+        sourcetissues={};
     else %EEGOUT = pop_dipfit_gridsearch( EEGIN, comps, xgrid, ygrid, zgrid, thresh ,sourcetissue)
         pos=[];
         if nargin < 2
@@ -163,7 +164,7 @@ if nargin < 2
             sourcetissues= varargin{5};
         end
         if nargin < 7
-            sourcetissues= {};
+            new_bnd= {};
         else
             new_bnd= varargin{6};
         end
@@ -190,7 +191,7 @@ end
               if sourcetissues{ii}==numel(new_bnd)
                   inside=inside|is_inside(pos,new_bnd(end));
               else
-                  inside=inside|is_inside(pos,new_bnd(sourcetissues{ii}))&~is_inside(pos,new_bnd(sourcetissues{ii}+1));
+                  inside=inside|(is_inside(pos,new_bnd(sourcetissues{ii}))&~is_inside(pos,new_bnd(sourcetissues{ii}+1)));
               end
           end
       end
