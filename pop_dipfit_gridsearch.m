@@ -73,7 +73,7 @@ if ~isfield(EEG, 'dipfit')
   error('General dipolefit settings not specified');
 end
 
-if ~isfield(EEG.dipfit, 'vol') & ~isfield(EEG.dipfit, 'hdmfile')
+if ~isfield(EEG.dipfit, 'vol') && ~isfield(EEG.dipfit, 'hdmfile')
   error('Dipolefit volume conductor model not specified');
 end
 
@@ -101,7 +101,7 @@ if nargin < 2
     
     result = inputdlg2( promptstr, 'Batch dipole fit -- pop_dipfit_gridsearch()', 1,  inistr, 'pop_dipfit_gridsearch');
     
-    if length(result)==0
+    if isempty(result)
       % user pressed cancel
       return
     end

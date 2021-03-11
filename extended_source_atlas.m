@@ -22,7 +22,7 @@ inside = is_inside(cell2mat({EEG.dipfit.model.posxyzcoarse}'),  EEG.etc.bnd(end)
 for i_dip = 1:length(EEG.dipfit.model)
     if inside(i_dip)
         EEG.dipfit.model(i_dip).tissuecoarse = ['Brain_' EEG.dipfit.model(i_dip).areadk];
-        distances = sourcemodel.pos - EEG.dipfit.model(i_dip).posxyz;
+        distances = sourcemodel.pos - EEG.dipfit.model(i_dip).posxyzcoarse;
         [EEG.dipfit.model(i_dip).closestdipoledistancecoarse, ~] = min(sqrt(sum(distances.^2,2)));
     else
         distances = musclegrid.pos - EEG.dipfit.model(i_dip).posxyzcoarse;
