@@ -205,7 +205,6 @@ end
       clear vol
       comp = eeglab2fieldtrip(EEG, 'componentanalysis', 'dipfit');
       comp.elec.chanpos=comp.elec.elecpos;     
-      ft_defaults;
       [EEG.dipfit.vol, comp.elec] = ft_prepare_vol_sens(EEG.dipfit.vol, comp.elec);      
       lf=ft_compute_leadfield(sourcemodel.pos(sourcemodel.inside,:), comp.elec, EEG.dipfit.vol);
       lf=permute(reshape(lf,size(lf,1),3,[]),[1 3 2]);
