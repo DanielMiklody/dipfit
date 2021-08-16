@@ -94,6 +94,36 @@ for iComp = g.components(:)'
         end
         
         fprintf('Component %d: area %s\n', iComp, EEG.dipfit.model(iComp).areadk);
+    elseif size(EEG.dipfit.model(iComp).posxyz,1) == 2
+        atlascoordL = tfinv * [EEG.dipfit.model(iComp).posxyz(1,:) 1]';
+        atlascoordR = tfinv * [EEG.dipfit.model(iComp).posxyz(2,:) 1]';
+        
+        % find close location in Atlas
+        distanceL = sqrt(sum((hm.cortex.vertices-repmat(atlascoordL(1:3)', [size(hm.cortex.vertices,1) 1])).^2,2));
+        distanceR = sqrt(sum((hm.cortex.vertices-repmat(atlascoordR(1:3)', [size(hm.cortex.vertices,1) 1])).^2,2));
+        
+        % compute distance to each brain area
+        [~,selectedPtL] = min( distanceL );
+        [~,selectedPtR] = min( distanceR );
+        areaL = hm.atlas.colorTable(selectedPtL);
+        areaR = hm.atlas.colorTable(selectedPtR);
+        if (areaL > 0)||(areaR >0)
+            if areaL 
+                labelL=hm.atlas.label{areaL};
+            else
+                labelL='no_area';
+            end
+            if areaR
+                labelR=hm.atlas.label{areaR};
+            else
+                labelR='no_area';
+            end
+            EEG.dipfit.model(iComp).areadk = ['Sym_' labelL '_' labelR];
+        else
+            EEG.dipfit.model(iComp).areadk = 'no area';
+        end
+        
+        fprintf('Component %d: area %s\n', iComp, EEG.dipfit.model(iComp).areadk);
     else
         if ~isempty(EEG.dipfit.model(iComp).posxyz)
             fprintf('Component %d: cannot find brain area for bilateral dipoles\n', iComp);

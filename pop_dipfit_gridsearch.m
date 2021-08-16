@@ -163,10 +163,17 @@ if nargin < 2
         else
             sourcetissues= varargin{5};
         end
-        if nargin < 7
+        if nargin < 8
             new_bnd= {};
         else
             new_bnd= varargin{6};
+        end
+        if nargin < 9
+            symmetry= [];
+            numdipoles=1;
+        else
+            symmetry= varargin{7};
+            numdipoles=2;
         end
     end
     options = { 'waitbar' 'none' };
@@ -203,17 +210,21 @@ end
       load(EEG.dipfit.hdmfile);      
       EEG.dipfit.vol=vol;
       clear vol
-      comp = eeglab2fieldtrip(EEG, 'componentanalysis', 'dipfit');
-      comp.elec.chanpos=comp.elec.elecpos;     
-      [EEG.dipfit.vol, comp.elec] = ft_prepare_vol_sens(EEG.dipfit.vol, comp.elec);      
-      lf=ft_compute_leadfield(sourcemodel.pos(sourcemodel.inside,:), comp.elec, EEG.dipfit.vol);
-      lf=permute(reshape(lf,size(lf,1),3,[]),[1 3 2]);
-      lf2=nan(size(lf,1),numel(sourcemodel.inside),3);
-      lf2(:,sourcemodel.inside,:)=lf;
-      sourcemodel.leadfield=num2cell(lf2,[1 3]);
-      sourcemodel.leadfield=cellfun(@squeeze,sourcemodel.leadfield,'UniformOutput',false);
-      sourcemodel.label=comp.elec.label;
-      EEGOUT = dipfit_gridsearch(EEG, 'component', select, 'sourcemodel',sourcemodel, options{:});
+      if isempty(symmetry)
+          comp = eeglab2fieldtrip(EEG, 'componentanalysis', 'dipfit');
+          comp.elec.chanpos=comp.elec.elecpos;
+          [EEG.dipfit.vol, comp.elec] = ft_prepare_vol_sens(EEG.dipfit.vol, comp.elec);
+          lf=ft_compute_leadfield(sourcemodel.pos(sourcemodel.inside,:), comp.elec, EEG.dipfit.vol);
+          lf=permute(reshape(lf,size(lf,1),3,[]),[1 3 2]);
+          lf2=nan(size(lf,1),numel(sourcemodel.inside),3);
+          lf2(:,sourcemodel.inside,:)=lf;
+          sourcemodel.leadfield=num2cell(lf2,[1 3]);
+          sourcemodel.leadfield=cellfun(@squeeze,sourcemodel.leadfield,'UniformOutput',false);
+          sourcemodel.label=comp.elec.label;
+      end
+      EEGOUT = dipfit_gridsearch(EEG, 'component', select, ...
+          'sourcemodel', sourcemodel, 'symmetry', symmetry,...
+          'numdipoles', numdipoles, options{:});
   else
       EEGOUT = dipfit_gridsearch(EEG, 'component', select, 'xgrid', xgrid, 'ygrid', ygrid, 'zgrid', zgrid, options{:});
   end

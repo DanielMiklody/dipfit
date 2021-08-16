@@ -173,7 +173,7 @@ function [EEG, com] = pop_multifit(EEG, comps, varargin)
                 if isempty(EEG.dipfit.model(i).posxyz)
                     EEG.dipfit.model(i).posxyz = zeros(1,3);
                     EEG.dipfit.model(i).momxyz = zeros(2,3);
-                else
+                elseif size(EEG.dipfit.model(i).posxyz,1)==1
                     EEG.dipfit.model(i).posxyz(2,:) = EEG.dipfit.model(i).posxyz;
                     if strcmpi(EEG.dipfit.coordformat, 'MNI')
                          EEG.dipfit.model(i).posxyz(:,1) = [-40;40];
