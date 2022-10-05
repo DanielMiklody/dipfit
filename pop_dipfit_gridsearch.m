@@ -136,7 +136,7 @@ if nargin < 2
     else %EEGOUT = pop_dipfit_gridsearch( EEGIN, comps, xgrid, ygrid, zgrid, thresh ,sourcetissue)
         pos=[];
         if nargin < 2
-            select = [1:size(EEG.icawinv,2)];
+            select = 1:size(EEG.icawinv,2);
         end
         if nargin < 3
             xgrid  = eval( xgridstr );
@@ -187,7 +187,7 @@ end
       if ~isempty(sourcetissues)
           [X, Y, Z]  = ndgrid(xgrid, ygrid, zgrid);
           pos=[X(:) Y(:) Z(:)];
-          if is_inside(new_bnd(4).pos,new_bnd(1))
+          if is_inside(new_bnd(end).pos,new_bnd(1))
               warning('assuming surface nesting from outside --> inside');              
           else
               warning('assuming surface nesting from inside -->outside');              
@@ -207,9 +207,11 @@ end
       if ~isempty(inside)
           sourcemodel.inside=inside;
       end
-      load(EEG.dipfit.hdmfile);      
-      EEG.dipfit.vol=vol;
-      clear vol
+      if ~isfield(EEG.dipfit,'vol')
+          load(EEG.dipfit.hdmfile);
+          EEG.dipfit.vol=vol;
+          clear vol
+      end      
       if isempty(symmetry)
           comp = eeglab2fieldtrip(EEG, 'componentanalysis', 'dipfit');
           comp.elec.chanpos=comp.elec.elecpos;

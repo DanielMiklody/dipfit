@@ -155,6 +155,7 @@ switch fieldbox
             % the labels correspond to the component activations that are stored in data.trial
             data.label{comp} = sprintf('ica_%03d', comp);
         end
+        
         % get the spatial distribution and electrode positions
         tmpchanlocs    = EEG.chanlocs;
         data.topolabel = { tmpchanlocs(EEG.icachansind).labels };
